@@ -14,14 +14,15 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  username  String    @unique
-  password  String
-  invoices  Invoice[]
-  expenses  Expense[]
-  customers Customer[]
-  createdAt DateTime  @default(now())
-  product   Product[]
+  id           Int            @id @default(autoincrement())
+  email     String         @unique
+  password     String
+  invoices     Invoice[]
+  expenses     Expense[]
+  customers    Customer[]
+  createdAt    DateTime       @default(now())
+  product      Product[]
+  BusinessInfo BusinessInfo[]
 }
 
 model Customer {
@@ -36,45 +37,45 @@ model Customer {
 }
 
 model Product {
-  id          Int       @id @default(autoincrement())
-  name        String
-  price       Float
-  stock       Int       @default(0)
-  user        User      @relation(fields: [userId], references: [id])
-  userId      Int
-  createdAt   DateTime  @default(now())
+  id           Int           @id @default(autoincrement())
+  name         String
+  price        Float
+  stock        Int           @default(0)
+  user         User          @relation(fields: [userId], references: [id])
+  userId       Int
+  createdAt    DateTime      @default(now())
   invoiceItems InvoiceItem[]
 }
 
 model Invoice {
-  id          Int           @id @default(autoincrement())
+  id          Int    @id @default(autoincrement())
   title       String
   totalAmount Float
-  user        User          @relation(fields: [userId], references: [id])
+  user        User   @relation(fields: [userId], references: [id])
   userId      Int
 
-  customer    Customer?     @relation(fields: [customerId], references: [id])
-  customerId  Int?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  customerId Int?
 
-  status      String        @default("PAID")
-  issueDate   DateTime      @default(now())
-  dueDate     DateTime?
+  status    String    @default("PAID")
+  issueDate DateTime  @default(now())
+  dueDate   DateTime?
 
-  items       InvoiceItem[]
-  createdAt   DateTime      @default(now())
+  items     InvoiceItem[]
+  createdAt DateTime      @default(now())
 }
 
 model InvoiceItem {
-  id          Int      @id @default(autoincrement())
+  id          Int    @id @default(autoincrement())
   description String
   quantity    Int
   price       Float
 
-  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
-  invoiceId   Int
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+  invoiceId Int
 
-  product     Product? @relation(fields: [productid], references: [id])
-  productid   Int?
+  product   Product? @relation(fields: [productid], references: [id])
+  productid Int?
 }
 
 model Expense {
@@ -83,5 +84,23 @@ model Expense {
   amount    Float
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
+  createdAt DateTime @default(now())
+}
+
+model BusinessInfo {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  businessName String?
+  address      String?
+  phone        String?
+  email        String?
+  gst          String?
+  gstPercent   Float?
+  terms        String?
+  logo         String?
+  signature    String?
+
   createdAt DateTime @default(now())
 }
