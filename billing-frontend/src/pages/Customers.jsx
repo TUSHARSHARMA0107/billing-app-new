@@ -1,116 +1,129 @@
 import { useEffect, useState } from "react";
 import { request } from "../services/apiHelper";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 export default function Customers() {
-  const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [customers, setCustomers] = useState([]);
+  const [form, setForm] = useState({ name: "", email: "", phone: "" });
+  const [loading, setLoading] = useState(false);
 
-  const fetchCustomers = async () => {
-    const res = await request("get", "/customers");
-    setCustomers(res);
+  // Fetch all customers
+  const loadCustomers = async () => {
+    try {
+      const data = await request("get", "/customers");
+      setCustomers(data);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   useEffect(() => {
-    fetchCustomers();
+    loadCustomers();
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await request("post", "/customers", form);
-    toast.success("Customer Added");
-    setForm({ name: "", email: "", phone: "" });
-    fetchCustomers();
+  // Add customer
+  const addCustomer = async () => {
+    if (!form.name) return toast.error("Name is required");
+
+    try {
+      setLoading(true);
+      await request("post", "/customers", form);
+      toast.success("Customer added");
+      setForm({ name: "", email: "", phone: "" });
+      loadCustomers();
+    } catch {
+      toast.error("Failed to add");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete customer
+  const deleteCustomer = async (id) => {
+    if (!confirm("Delete this customer?")) return;
+    try {
+      await request("delete",` /customers/${id}`);
+      toast.success("Customer deleted");
+      loadCustomers();
+    } catch {
+      toast.error("Delete failed");
+    }
   };
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 text-white">
+      <h1 className="text-3xl font-semibold mb-6">Customers</h1>
 
-      {/* HEADER */}
-      <h1 className="text-3xl font-semibold text-gray-100 dark:text-white">
-        Customers
-      </h1>
+      {/* Add Customer Card */}
+      <div className="bg-white/10 backdrop-blur-xl p-6 rounded-xl shadow-lg w-full max-w-lg">
+        <h2 className="text-xl mb-4 font-medium">Add Customer</h2>
 
-      <div className="grid md:grid-cols-2 gap-8">
+        <div className="space-y-3">
+          <input
+            type="text"
+            placeholder="Name"
+            className="w-full px-4 py-2 bg-white/20 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
 
-        {/* LEFT FORM */}
-        <div className="bg-white/10 dark:bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-gray-700/40">
-          <h2 className="text-xl mb-4 font-semibold text-gray-200 dark:text-white">Add Customer</h2>
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full px-4 py-2 bg-white/20 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            
-            <input 
-              type="text"
-              placeholder="Customer Name"
-              className="w-full p-3 rounded-lg bg-gray-900/40 dark:bg-gray-700/50 text-white border border-gray-600 focus:border-blue-400"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
+          <input
+            type="text"
+            placeholder="Phone"
+            className="w-full px-4 py-2 bg-white/20 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          />
 
-            <input 
-              type="email"
-              placeholder="Email"
-              className="w-full p-3 rounded-lg bg-gray-900/40 dark:bg-gray-700/50 text-white border border-gray-600 focus:border-blue-400"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-
-            <input 
-              type="text"
-              placeholder="Phone Number"
-              className="w-full p-3 rounded-lg bg-gray-900/40 dark:bg-gray-700/50 text-white border border-gray-600 focus:border-blue-400"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            />
-
-            <button 
-              className="w-full p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-all"
-            >
-              Add Customer
-            </button>
-          </form>
+          <button
+            onClick={addCustomer}
+            disabled={loading}
+            className="w-full bg-purple-600 py-2 rounded-lg hover:bg-purple-700 transition shadow-md"
+          >
+            {loading ? "Adding..." : "Add Customer"}
+          </button>
         </div>
-
-        {/* RIGHT TABLE */}
-        <div className="bg-white/10 dark:bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-gray-700/40">
-          <h2 className="text-xl mb-4 font-semibold text-gray-200 dark:text-white">Customer List</h2>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-white">
-              <thead>
-                <tr className="border-b border-gray-600 text-gray-300 text-sm">
-                  <th className="py-2 text-left">Name</th>
-                  <th className="py-2 text-left">Email</th>
-                  <th className="py-2 text-left">Phone</th>
-                  <th className="py-2 text-right">Added</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {customers.map((c) => (
-                  <tr 
-                    key={c.id}
-                    className="border-b border-gray-700/40 hover:bg-gray-700/40 transition"
-                  >
-                    <td className="py-3">{c.name}</td>
-                    <td>{c.email || "--"}</td>
-                    <td>{c.phone || "--"}</td>
-                    <td className="text-right">
-                      {new Date(c.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {customers.length === 0 && (
-              <p className="text-gray-400 text-center pt-6">No customers added yet.</p>
-            )}
-          </div>
-        </div>
-
       </div>
 
+      {/* Customer List */}
+      <div className="mt-10">
+        <h2 className="text-xl font-semibold mb-3">Customer List</h2>
+
+        <div className="space-y-3">
+          {customers.length === 0 && (
+            <p className="text-gray-300">No customers found.</p>
+          )}
+
+          {customers.map((c) => (
+            <div
+              key={c.id}
+              className="bg-white/10 backdrop-blur-xl p-4 rounded-lg flex items-center justify-between border border-white/10"
+            >
+              <div>
+                <h3 className="text-lg font-medium">{c.name}</h3>
+                <p className="text-gray-300">{c.email || "No email"}</p>
+                <p className="text-gray-300">{c.phone || "No phone"}</p>
+              </div>
+
+              {/* DELETE BUTTON */}
+              <button
+                onClick={() => deleteCustomer(c.id)}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition"
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

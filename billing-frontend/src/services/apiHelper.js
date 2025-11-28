@@ -1,16 +1,27 @@
-import { api } from "./api";
-import toast from "react-hot-toast";
+import axios from "axios";
 
-export default async function request(method, url, data = null) {
+export const api = axios.create({
+  baseURL: "http://localhost:5000/api",
+});
+
+// FINAL REQUEST FUNCTION (works for all pages)
+export async function request(method, url, data = null) {
   try {
-    const res = await api[method](url, data, {
+    let token = localStorage.getItem("token");
+
+    const res = await api({
+      method,
+      url,
+      data,
       headers: {
-        "x-auth-token": localStorage.getItem("token")
-      }
+        "x-auth-token": token,   // 👈 BACKEND EXACT HEADER NAME
+      },
     });
+
     return res.data;
+
   } catch (err) {
-    toast.error(err.response?.data?.message || "Something went wrong");
+    console.log(err);
     throw err;
   }
 }

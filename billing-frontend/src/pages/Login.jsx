@@ -1,6 +1,6 @@
 import { useState } from "react";
+import { request } from "../services/apiHelper";
 import { useNavigate, Link } from "react-router-dom";
-import request from "../services/apiHelper";
 import toast from "react-hot-toast";
 
 export default function Login() {
@@ -8,59 +8,57 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  async function handleLogin(e) {
-    e.preventDefault();
+  const submit = async () => {
+    if (!email || !password) return toast.error("Email & password required");
     try {
-      const res = await request("post", "/auth/login", {
-        email,
-        password
-      });
-
+      const res = await request("post", "/auth/login", { email, password });
       localStorage.setItem("token", res.token);
-      toast.success("Welcome back!");
-
+      toast.success("Logged in!");
       nav("/dashboard");
-    } catch (err) {
-      console.log(err);
-    }
-  }
+    } catch {}
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center px-4">
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl p-8 rounded-2xl w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e293b]">
+      <div className="w-full max-w-md p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl">
 
-        <h1 className="text-3xl font-bold text-white text-center mb-6">
-          Welcome Back
+        <h1 className="text-3xl font-semibold text-white text-center mb-6">
+          Login
         </h1>
 
-        <form className="space-y-4" onSubmit={handleLogin}>
+        <div className="space-y-4">
           <input
             type="email"
+            className="w-full px-4 py-3 bg-white/10 text-white rounded-lg placeholder-gray-300 
+            focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="Email"
-            className="w-full p-3 rounded bg-white/20 text-white placeholder-gray-300"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
           <input
             type="password"
+            className="w-full px-4 py-3 bg-white/10 text-white rounded-lg placeholder-gray-300 
+            focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="Password"
-            className="w-full p-3 rounded bg-white/20 text-white placeholder-gray-300"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button className="w-full bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg transition">
+          <button
+            onClick={submit}
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-lg transition"
+          >
             Login
           </button>
-        </form>
 
-        <p className="text-center text-gray-300 mt-4">
-          Don’t have an account?{" "}
-          <Link to="/register" className="text-blue-400 hover:underline">
-            Register
-          </Link>
-        </p>
+          <p className="text-gray-300 text-center">
+            New here?{" "}
+            <Link className="text-blue-400 hover:underline" to="/register">
+              Create account
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

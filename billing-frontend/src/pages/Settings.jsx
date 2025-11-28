@@ -3,105 +3,140 @@ import { request } from "../services/apiHelper";
 import toast from "react-hot-toast";
 
 export default function Settings() {
-  const [loading, setLoading] = useState(true);
-
-  const [businessName, setBusinessName] = useState("");
-  const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-
-  const [gst, setGst] = useState("");
-  const [gstPercent, setGstPercent] = useState("");
-
-  const [terms, setTerms] = useState("");
-  const [logo, setLogo] = useState("");
-  const [signature, setSignature] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [info, setInfo] = useState({
+    businessName: "",
+    address: "",
+    phone: "",
+    gst: "",
+    logoUrl: "",
+  });
 
   // Load settings
+  const loadSettings = async () => {
+    try {
+      const res = await request("get", "/settings");
+      if (res) setInfo(res);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   useEffect(() => {
-    request("get", "/settings")
-      .then((data) => {
-        if (data) {
-          setBusinessName(data.businessName || "");
-          setAddress(data.address || "");
-          setPhone(data.phone || "");
-          setEmail(data.email || "");
-          setGst(data.gst || "");
-          setGstPercent(data.gstPercent || "");
-          setTerms(data.terms || "");
-          setLogo(data.logo || "");
-          setSignature(data.signature || "");
-        }
-      })
-      .finally(() => setLoading(false));
+    loadSettings();
   }, []);
 
   const saveSettings = async () => {
-    await request("post", "/settings", {
-      businessName,
-      address,
-      phone,
-      email,
-      gst,
-      gstPercent: parseFloat(gstPercent || 0),
-      terms,
-      logo,
-      signature,
-    });
-
-    toast.success("Settings saved!");
+    try {
+      setLoading(true);
+      await request("post", "/settings", info);
+      toast.success("Settings saved!");
+    } catch {
+      toast.error("Failed to save settings");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (loading) return <div>Loading…</div>;
-
   return (
-    <div className="max-w-xl bg-white dark:bg-gray-800 shadow p-6 rounded">
+    <div className="p-6 text-white">
+      <h1 className="text-3xl font-semibold tracking-wide mb-8">Business Settings</h1>
 
-      <h1 className="text-2xl font-bold mb-6">Business Settings</h1>
+      {/* CARD */}
+      <div className="max-w-2xl p-6 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 
+        backdrop-blur-xl border border-white/10 shadow-xl hover:border-purple-400/40 transition-all">
 
-      <label className="font-semibold">Business Name</label>
-      <input className="w-full border p-2 rounded mb-3 dark:bg-gray-700"
-        value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+        <h2 className="text-xl font-semibold mb-6">Business Information</h2>
 
-      <label className="font-semibold">Address</label>
-      <textarea className="w-full border p-2 rounded mb-3 dark:bg-gray-700"
-        value={address} onChange={(e) => setAddress(e.target.value)} />
+        <div className="space-y-5">
 
-      <label className="font-semibold">Phone</label>
-      <input className="w-full border p-2 rounded mb-3 dark:bg-gray-700"
-        value={phone} onChange={(e) => setPhone(e.target.value)} />
+          {/* Business Name */}
+          <div>
+            <label className="text-sm text-gray-300">Business Name</label>
+            <input
+              type="text"
+              placeholder="Your business name"
+              className="w-full px-4 py-3 mt-1 rounded-lg bg-white/10 placeholder-gray-300 
+              focus:ring-2 focus:ring-purple-500 outline-none"
+              value={info.businessName}
+              onChange={(e) => setInfo({ ...info, businessName: e.target.value })}
+            />
+          </div>
 
-      <label className="font-semibold">Email</label>
-      <input className="w-full border p-2 rounded mb-3 dark:bg-gray-700"
-        value={email} onChange={(e) => setEmail(e.target.value)} />
+          {/* Address */}
+          <div>
+            <label className="text-sm text-gray-300">Address</label>
+            <textarea
+              placeholder="Business address"
+              className="w-full px-4 py-3 mt-1 rounded-lg bg-white/10 placeholder-gray-300 
+              focus:ring-2 focus:ring-purple-500 outline-none h-24"
+              value={info.address}
+              onChange={(e) => setInfo({ ...info, address: e.target.value })}
+            ></textarea>
+          </div>
 
-      <label className="font-semibold">GST Number</label>
-      <input className="w-full border p-2 rounded mb-3 dark:bg-gray-700"
-        value={gst} onChange={(e) => setGst(e.target.value)} />
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Phone */}
+            <div>
+              <label className="text-sm text-gray-300">Phone</label>
+              <input
+                type="text"
+                placeholder="Business phone"
+                className="w-full px-4 py-3 mt-1 rounded-lg bg-white/10 placeholder-gray-300 
+                focus:ring-2 focus:ring-purple-500 outline-none"
+                value={info.phone}
+                onChange={(e) => setInfo({ ...info, phone: e.target.value })}
+              />
+            </div>
 
-      <label className="font-semibold">GST %</label>
-      <input className="w-full border p-2 rounded mb-3 dark:bg-gray-700"
-        type="number" value={gstPercent}
-        onChange={(e) => setGstPercent(e.target.value)} />
+            {/* GST */}
+            <div>
+              <label className="text-sm text-gray-300">GST No.</label>
+              <input
+                type="text"
+                placeholder="GST Number"
+                className="w-full px-4 py-3 mt-1 rounded-lg bg-white/10 placeholder-gray-300 
+                focus:ring-2 focus:ring-purple-500 outline-none"
+                value={info.gst}
+                onChange={(e) => setInfo({ ...info, gst: e.target.value })}
+              />
+            </div>
+          </div>
 
-      <label className="font-semibold">Logo URL</label>
-      <input className="w-full border p-2 rounded mb-3 dark:bg-gray-700"
-        value={logo} onChange={(e) => setLogo(e.target.value)} />
+          {/* Logo URL */}
+          <div>
+            <label className="text-sm text-gray-300">Business Logo URL</label>
+            <input
+              type="text"
+              placeholder="https://yourlogo.png"
+              className="w-full px-4 py-3 mt-1 rounded-lg bg-white/10 placeholder-gray-300 
+              focus:ring-2 focus:ring-purple-500 outline-none"
+              value={info.logoUrl}
+              onChange={(e) => setInfo({ ...info, logoUrl: e.target.value })}
+            />
+          </div>
 
-      <label className="font-semibold">Signature URL</label>
-      <input className="w-full border p-2 rounded mb-3 dark:bg-gray-700"
-        value={signature} onChange={(e) => setSignature(e.target.value)} />
+          {info.logoUrl && (
+            <div className="mt-3">
+              <img
+                src={info.logoUrl}
+                alt="Business Logo"
+                className="h-20 rounded-lg object-contain border border-white/20 p-2"
+              />
+            </div>
+          )}
 
-      <label className="font-semibold">Terms & Conditions</label>
-      <textarea className="w-full border p-2 rounded mb-4 dark:bg-gray-700"
-        value={terms} onChange={(e) => setTerms(e.target.value)} />
-
-      <button
-        onClick={saveSettings}
-        className="bg-blue-600 text-white w-full py-2 rounded"
-      >
-        Save Settings
-      </button>
+          {/* Save */}
+          <button
+            onClick={saveSettings}
+            disabled={loading}
+            className="w-full py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium 
+              shadow-lg hover:shadow-purple-500/40 transition-all mt-6"
+          >
+            {loading ? "Saving..." : "Save Settings"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

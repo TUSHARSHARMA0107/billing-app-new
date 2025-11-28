@@ -7,10 +7,10 @@ const router = express.Router();
 // REGISTER
 router.post("/register", async (req, res) => {
   const prisma = req.prisma;
-  const { username, email, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!email || !password || !username)
-    return res.status(400).json({ message: "All fields required" });
+  if (!email || !password)
+    return res.status(400).json({ message: "Email & password required" });
 
   const exists = await prisma.user.findUnique({ where: { email } });
   if (exists) return res.status(400).json({ message: "Email already exists" });
@@ -19,13 +19,11 @@ router.post("/register", async (req, res) => {
 
   const user = await prisma.user.create({
     data: {
-      username,
       email,
       password: hashed,
     },
   });
 
-  // auto login after register
   const token = jwt.sign(
     { userId: user.id, email: user.email },
     process.env.JWT_SECRET,

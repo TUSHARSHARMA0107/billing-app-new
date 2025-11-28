@@ -1,54 +1,38 @@
 import { useState } from "react";
+import { request } from "../services/apiHelper";
 import { useNavigate, Link } from "react-router-dom";
-import request from "../services/apiHelper";
 import toast from "react-hot-toast";
 
 export default function Register() {
   const nav = useNavigate();
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  async function handleRegister(e) {
-    e.preventDefault();
+  const submit = async () => {
+    if (!email || !password) return toast.error("Email & password required");
 
     try {
-      const res = await request("post", "/auth/register", {
-        email,
-        username,
-        password
-      });
-
+      const res = await request("post", "/auth/register", { email, password });
       localStorage.setItem("token", res.token);
-      toast.success("Account Created!");
-
+      toast.success("Account created!");
       nav("/dashboard");
-    } catch (err) {
-      console.log(err);
-    }
-  }
+    } catch {}
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center px-4">
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl p-8 rounded-2xl w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e293b]">
+      <div className="w-full max-w-md p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl">
 
-        <h1 className="text-3xl font-bold text-white text-center mb-6">
-          Create Your Account
+        <h1 className="text-3xl font-semibold text-white text-center mb-6">
+          Create Account
         </h1>
 
-        <form className="space-y-4" onSubmit={handleRegister}>
-          <input
-            type="text"
-            placeholder="Username"
-            className="w-full p-3 rounded bg-white/20 text-white placeholder-gray-300"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-
+        <div className="space-y-4">
           <input
             type="email"
             placeholder="Email"
-            className="w-full p-3 rounded bg-white/20 text-white placeholder-gray-300"
+            className="w-full px-4 py-3 bg-white/10 text-white rounded-lg placeholder-gray-300 
+            focus:ring-2 focus:ring-purple-500 outline-none"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -56,22 +40,26 @@ export default function Register() {
           <input
             type="password"
             placeholder="Password"
-            className="w-full p-3 rounded bg-white/20 text-white placeholder-gray-300"
+            className="w-full px-4 py-3 bg-white/10 text-white rounded-lg placeholder-gray-300 
+            focus:ring-2 focus:ring-purple-500 outline-none"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button className="w-full bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg transition">
-            Create Account
+          <button
+            onClick={submit}
+            className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium shadow-lg transition"
+          >
+            Register
           </button>
-        </form>
 
-        <p className="text-center text-gray-300 mt-4">
-          Already have an account?{" "}
-          <Link to="/" className="text-blue-400 hover:underline">
-            Login
-          </Link>
-        </p>
+          <p className="text-gray-300 text-center">
+            Already registered?{" "}
+            <Link className="text-purple-400 hover:underline" to="/">
+              Login
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

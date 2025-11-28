@@ -1,101 +1,119 @@
 import { useEffect, useState } from "react";
-import { api } from "../services/api";
-import { Line } from "react-chartjs-2";
+import { request } from "../services/apiHelper";
+import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
-  LineElement,
+  BarElement,
   CategoryScale,
   LinearScale,
-  PointElement,
   Tooltip,
-  Legend
+  Legend,
 } from "chart.js";
 
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
+ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 export default function Dashboard() {
-  const [stats, setStats] = useState(null);
-  const token = localStorage.getItem("token");
+  const [summary, setSummary] = useState({
+    totalIncome: 0,
+    totalExpenses: 0,
+    profitLoss: 0,
+  });
+
+  const [monthly, setMonthly] = useState({
+    invoices: [],
+    expenses: [],
+  });
 
   useEffect(() => {
-    api
-      .get("/dashboard", {
-        headers: { Authorization: token }
-      })
-      .then((res) => setStats(res.data))
-      .catch((err) => console.log(err));
+    loadData();
   }, []);
 
-  if (!stats) return <div>Loading...</div>;
+  const loadData = async () => {
+    try {
+      const s = await request("get", "/dashboard/profit-loss");
+      const m = await request("get", "/dashboard/monthly-summary");
 
-  const revenueChart = {
-    labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
-    datasets: [
-      {
-        label: "Monthly Revenue",
-        data: stats.monthlyRevenue,
-        borderColor: "rgb(34,197,94)",
-        backgroundColor: "rgba(34,197,94,0.2)",
-        tension: 0.3
-      }
-    ]
+      setSummary(s);
+      setMonthly(m);
+    } catch {}
   };
 
-  const expenseChart = {
-    labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+  // Preparing Monthly Chart Data
+  const months = [...new Set([
+    ...monthly.invoices.map(i => i.month),
+    ...monthly.expenses.map(e => e.month),
+  ])].sort();
+
+  const incomeData = months.map(m =>
+    monthly.invoices.find(i => i.month === m)?.income || 0
+  );
+
+  const expenseData = months.map(m =>
+    monthly.expenses.find(e => e.month === m)?.expenses || 0
+  );
+
+  const data = {
+    labels: months,
     datasets: [
       {
-        label: "Monthly Expenses",
-        data: stats.monthlyExpenses,
-        borderColor: "rgb(239,68,68)",
-        backgroundColor: "rgba(239,68,68,0.2)",
-        tension: 0.3
-      }
-    ]
+        label: "Income",
+        data: incomeData,
+        backgroundColor: "rgba(34,197,94,0.6)", // green
+        borderRadius: 8,
+      },
+      {
+        label: "Expenses",
+        data: expenseData,
+        backgroundColor: "rgba(239,68,68,0.6)", // red
+        borderRadius: 8,
+      },
+    ],
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+    <div className="p-6 text-white">
 
-      {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      {/* Title */}
+      <h1 className="text-3xl font-bold mb-6">
+        Dashboard Overview
+      </h1>
 
-        <div className="bg-white p-5 shadow rounded">
-          <p className="text-gray-500">Total Revenue</p>
-          <p className="text-3xl font-bold text-green-600">₹{stats.totalRevenue}</p>
+      {/* Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+        {/* Income Card */}
+        <div className="bg-white/10 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-lg">
+          <p className="text-gray-300 text-sm">Total Income</p>
+          <h2 className="text-3xl font-bold text-green-400 mt-1">
+            ₹{summary.totalIncome.toLocaleString()}
+          </h2>
         </div>
 
-        <div className="bg-white p-5 shadow rounded">
-          <p className="text-gray-500">Total Invoices</p>
-          <p className="text-3xl font-bold">{stats.totalInvoices}</p>
+        {/* Expense Card */}
+        <div className="bg-white/10 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-lg">
+          <p className="text-gray-300 text-sm">Total Expenses</p>
+          <h2 className="text-3xl font-bold text-red-400 mt-1">
+            ₹{summary.totalExpenses.toLocaleString()}
+          </h2>
         </div>
 
-        <div className="bg-white p-5 shadow rounded">
-          <p className="text-gray-500">Customers</p>
-          <p className="text-3xl font-bold">{stats.totalCustomers}</p>
+        {/* Profit/Loss Card */}
+        <div className="bg-white/10 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-lg">
+          <p className="text-gray-300 text-sm">Profit / Loss</p>
+          <h2
+            className={`text-3xl font-bold mt-1 ${
+              summary.profitLoss >= 0 ? "text-green-300" : "text-red-300"
+            }`}
+          >
+            ₹{summary.profitLoss.toLocaleString()}
+          </h2>
         </div>
-
-        <div className="bg-white p-5 shadow rounded">
-          <p className="text-gray-500">Expenses</p>
-          <p className="text-3xl font-bold text-red-600">₹{stats.totalExpenses}</p>
-        </div>
-
       </div>
 
-      {/* CHARTS */}
-      <div className="grid grid-cols-2 gap-6">
-
-        <div className="bg-white p-6 shadow rounded">
-          <h2 className="text-lg font-semibold mb-3">Revenue Overview</h2>
-          <Line data={revenueChart} />
-        </div>
-
-        <div className="bg-white p-6 shadow rounded">
-          <h2 className="text-lg font-semibold mb-3">Expenses Overview</h2>
-          <Line data={expenseChart} />
-        </div>
-
+      {/* Bar Chart Section */}
+      <div className="bg-white/10 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-lg">
+        <h2 className="text-xl font-semibold mb-4 text-gray-200">Monthly Summary</h2>
+        <Bar data={data} />
       </div>
     </div>
   );
