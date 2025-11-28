@@ -1,27 +1,32 @@
 import axios from "axios";
 
+// ---- AUTO SELECT BASE URL ----
+const BASE_URL =
+  import.meta.env.VITE_API_URL ||       // Render / Production
+  "http://localhost:5000/api";          // Local dev
+
+// ---- AXIOS INSTANCE ----
 export const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: BASE_URL,
 });
 
-// FINAL REQUEST FUNCTION (works for all pages)
+// ---- UNIVERSAL REQUEST FUNCTION ----
 export async function request(method, url, data = null) {
   try {
-    let token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
     const res = await api({
       method,
-      url,
+      url: url.startsWith("/") ? url : `/${url}`,  // Ensures /auth/login works
       data,
       headers: {
-        "x-auth-token": token,   // 👈 BACKEND EXACT HEADER NAME
+        "x-auth-token": token || "",
       },
     });
 
     return res.data;
-
   } catch (err) {
-    console.log(err);
+    console.log("API ERROR:", err.response?.data || err.message);
     throw err;
   }
 }
