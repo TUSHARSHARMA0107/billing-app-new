@@ -1,19 +1,25 @@
 import jwt from "jsonwebtoken";
 
 export default function auth(req, res, next) {
-  const token =
-    req.header("x-auth-token") ||
-    req.header("Authorization");
-
-  if (!token) {
-    return res.status(401).json({ message: "No token, authorization denied" });
-  }
-
   try {
+    let token =
+      req.header("x-auth-token") ||
+      req.header("authorization") ||
+      req.header("Authorization");
+
+    if (!token) {
+      return res.status(401).json({ msg: "No token, authorization denied" });
+    }
+
+    if (token.toLowerCase().startsWith("bearer ")) {
+      token = token.slice(7).trim();
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;   // { userId, email }
+    req.user = decoded; // IMPORTANT
     next();
   } catch (err) {
-    res.status(401).json({ message: "Invalid token" });
+    console.error("Auth Error:", err.message);
+    return res.status(401).json({ msg: "Token is not valid" });
   }
 }
